@@ -35,7 +35,9 @@ export class TileFactory{
 			scale: this.scale,
 			cell: cell,
 			geometry: geo,
-			material: this._materialFactory()
+			material: this._materialFactory.createBodyMaterial(),
+			upMaterial : this._materialFactory.createUpMaterial()
+			//selectedMaterial
 		});
 		return tile;
 	}
@@ -59,47 +61,70 @@ const DefaultExtrudeSettings = {
 	bevelThickness: 0.5
 };
 
-export const RandomRed = new TileFactory(DefaultExtrudeSettings,
-	function(){
-		return new THREE.MeshPhongMaterial({
-			color: Tools.randomizeRGB('100, 10, 10',10)
-		});
-	}
-);
+class AbstractMaterialFactory{
+	
 
-export const RandomBlack = new TileFactory(DefaultExtrudeSettings,
-	function(){
-		return new THREE.MeshPhongMaterial({
-			color: Tools.randomizeRGB('10, 10, 10', 20)
-		});
-	}
-);
+	createBodyMaterial(cell){}
 
-export const RandomBlue = new TileFactory(DefaultExtrudeSettings,
-	function(){
-		return new THREE.MeshPhongMaterial({
-			color: Tools.randomizeRGB('5, 5, 100', 20)
-		});
-	}
-);
+	createUpMaterial(cell){}
+	
+}
+const materialCache = new Map();
 
-export const RandomGreen = new TileFactory(DefaultExtrudeSettings,
-	function(){
-			return new THREE.MeshPhongMaterial({
-			color: Tools.randomizeRGB('10, 100, 10', 25)
-		});
-	}
-);
+class RandomColorFactory extends AbstractMaterialFactory{
+	constructor(rgb,deviation){
+		super();
+		this.rgb = rgb;
+		this.deviation;
 
-export const Swedish = new TileFactory(DefaultExtrudeSettings,
-	function(){
-		if(!this.cache){
-			var face =FlagDrawer.makeFlagMaterial();
-			var side = new THREE.MeshPhongMaterial({color:new THREE.Color(0x002654)});
-			this.cache=[face,side];
+		
+	}
+	
+	createBodyMaterial(cell){
+		const col = Tools.randomizeRGB('100, 10, 10',10);
+		var m = materialCache.get(col);
+		if(!m){
+			m = new THREE.MeshPhongMaterial({
+				color: col
+			})
+			materialCache.set(col,m);
+		} 
+		return m;
+	}	
+
+	
+}
+RandomColorFactory.createUpMaterial = RandomColorFactory.createBodyMaterial;
+
+export const RandomRed = new TileFactory(DefaultExtrudeSettings,new RandomColorFactory('100, 10, 10',10));	
+
+export const RandomBlack = new TileFactory(DefaultExtrudeSettings,new RandomColorFactory('10, 10, 10',20));		
+
+export const RandomBlue = new TileFactory(DefaultExtrudeSettings,new RandomColorFactory('5, 5, 100',20));	
+	
+export const RandomGreen = new TileFactory(DefaultExtrudeSettings,new RandomColorFactory('10, 100, 10',20));	
+
+
+
+class FlagFactory extends AbstractMaterialFactory{
+	constructor(country){
+		super();
+		switch(country){
+			case "Sweden": default:
+				this.upMaterial = FlagDrawer.createSwedishMaterial();
+				this.bodyMaterial =new THREE.MeshPhongMaterial({color:new THREE.Color(0x002654)});
+				break;	
 		}
-		return this.cache;
-	});
+	}
 
+	createBodyMaterial(cell){
+		return this.bodyMaterial;
+	}
+	createUpMaterial(cell){
+		return this.upMaterial;
+	}
+}
+
+export const Swedish = new TileFactory(DefaultExtrudeSettings, new FlagFactory("Sweden"));
 
 

@@ -97,7 +97,7 @@ function drawTricolore(canvas,c1,c2,c3){
 
 }
 
-export function makeFlagMaterial(){
+export function createSwedishMaterial(){
     var m = new THREE.MeshBasicMaterial();
     var canvas = document.createElement('canvas');
     canvas.width = 128;

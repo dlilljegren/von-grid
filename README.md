@@ -26,7 +26,8 @@ Refactoring of the excellent von-grid (https://github.com/vonWolfehaus/von-grid)
 
 - Renable Map Loading
 - Make hoover and select work in same way, changing only color of top material
-- 
+- Better caching of Materials
+
 
 ## Usage
 

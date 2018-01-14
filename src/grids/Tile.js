@@ -21,6 +21,9 @@ export class Tile{
 		if (!settings.cell || !settings.geometry) {
 			throw new Error('Missing Tile configuration');
 		}
+		if(!settings.material){
+			throw new Error("Missing material in config")
+		}
 
 		this.cell = settings.cell;
 		if (this.cell.tile && this.cell.tile !== this) this.cell.tile.dispose(); // remove whatever was there
@@ -32,21 +35,24 @@ export class Tile{
 		this.uniqueID = Tools.generateID();
 
 		this.geometry = settings.geometry;
+		
 		this.material = settings.material;
-		if (!this.material) {
-			this.material = new THREE.MeshPhongMaterial({
-				color: Tools.randomizeRGB('30, 30, 30', 13)
-			});
-		}
+		
+		//Set the material to use for the tiles flat side
+		this.upMaterial = settings.upMaterial || settings.material;
+		this.selectedMaterial = settings.selectedMaterial || DefaultSelectedMaterial;
+		
 
 		this.objectType = vg.TILE;
 		this.entity = null;
 		this.userData = {};
 
 		this.selected = false;
-		this.highlight = '0x0084cc';
+		
 
-		this.mesh = new THREE.Mesh(this.geometry, this.material);
+
+		const materials = [this.upMaterial,this.material];
+		this.mesh = new THREE.Mesh(this.geometry, materials);
 		this.mesh.userData.structure = this;
 
 		// create references so we can control orientation through this (Tile), instead of drilling down
@@ -57,27 +63,23 @@ export class Tile{
 		this.rotation.x = -90 * vg.DEG_TO_RAD;
 		this.mesh.scale.set(settings.scale, settings.scale, 1);
 
+		/*
 		if (this.material.emissive) {
 			this._emissive = this.material.emissive.getHex();
 		}
 		else {
 			this._emissive = null;
-		}
+		}*/
 	}
 
-
-	_select() {
-		if (this.material.emissive) {
-			this.material.emissive.setHex(this.highlight);
-		}
+	_select(){
+		//Change the material of the sides of the material to black so we get like a border
+		this.mesh.material[1] = this.selectedMaterial;
 		this.selected = true;
 		return this;
 	}
-
-	_deselect() {
-		if (this._emissive !== null && this.material.emissive) {
-			this.material.emissive.setHex(this._emissive);
-		}
+	_deselect(){
+		this.mesh.material[1] = this.material;
 		this.selected = false;
 		return this;
 	}
@@ -104,8 +106,7 @@ export class Tile{
 			if(this.mesh.parent) this.mesh.parent.remove(this.mesh);
 			if(this.mesh.userData)this.mesh.userData.structure = null;			
 		}
-		this.mesh = null;
-		this.material = null;
+		this.mesh = null;	
 		this.userData = null;
 		this.entity = null;
 		this.geometry = null;
@@ -113,4 +114,4 @@ export class Tile{
 	}
 };
 
-
+const DefaultSelectedMaterial =new THREE.MeshPhongMaterial({color:  new THREE.Color( 0x101010 )})
