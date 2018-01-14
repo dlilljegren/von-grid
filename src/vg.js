@@ -1,4 +1,4 @@
-var vg = { // eslint-disable-line
+export const vg = { // eslint-disable-line
 	VERSION: '0.1.1',
 
 	PI: Math.PI,
@@ -14,5 +14,6 @@ var vg = { // eslint-disable-line
 
 	HEX: 'hex',
 	SQR: 'square',
-	ABS: 'abstract'
+	ABS: 'abstract',
+	TWO_THIRDS: 2/3
 };

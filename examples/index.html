@@ -1,34 +1,295 @@
 <!DOCTYPE html>
 <html>
 <head>
+	
+	
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-	<meta name="author" content="Corey Birnbaum" />
+	<meta name="author" content="David Lilljegren" />
 	<title>Grid</title>
 
 	<link href="css/normalize.css" rel="stylesheet" type="text/css"/>
+	<link href="css/style.css" rel="stylesheet" type="text/css"/>
 	<style>
 		body {
 			overflow: hidden;
-			margin: 20px;
+		}
+		#view {
+			position: absolute;
+			top: 0;
+			left: 0;
 		}
 	</style>
+
+	
 </head>
 
 <body>
 
-	<div id="view">
+	<div id="view"></div>
+	<div id="control-panel" class="absolute">
+		<h3>Configure Grid</h3>
+		<div>			
+			<div>			
+				<select id="board-cfg-select">
+					<option value='{"type":"hex","cellSize":5,"cellHeight":2, "area":{"rect":{"width":64,"height":32}},"depth":3}'>Hex Size:5 Rect:64x32</option>
+					<option value='{"type":"hex","cellSize":20,"area":{"circle":{"radius":4}},"depth":3}'>Hex Size:10 Circle:4</option>
+					<option value='{"type":"hex","cellSize":4,"cellHeight":2, "area":{"rect":{"width":256,"height":64}},"depth":3}'>Hex Size:5 Rect:256x64</option>
+					<option value='{"type":"square","cellSize":10,"area":{"circle":{"radius":3}},"depth":3}'>Sqr Size:10 Circle:4</option>
+					<option value='{"type":"square","cellSize":5,"area":{"rect":{"width":64,"height":32}},"depth":3}'>Sqr Size:5 Rect:64x32</option>								
+				</select>				
+			</div>			
+			<button id="cfg-board-btn">Set Grid</button>	
+		</div>
+		
 
-		<h1>Examples</h1>
-		<a href="simple-hex.html">Simple (hexagon)</a><br/>
-		<a href="simple-square.html">Simple (square)</a><br/>
-		<a href="sprite-selection.html">Sprite selection</a><br/>
-		<a href="pathfinding.html">Pathfinding</a><br/>
-		<a href="load-map.html">Load map</a><br/>
+		<h3>Base Layer</h3>
+		<div>
+		<span>Animation<select id="ease-select">
+			<option value="Elastic.easeIn.config(1, 0.3)">Elastic</option>
+			<option value="Expo.easeIn">Exponential</option>			
+			<option value="Power4.easeInOut">Power4</option>
+			<option value="Bounce.easeInOut">Bounce</option>
+		</select>
+		</div>
+		<div>			
+			<span>Tile Creator</span>
+			<select id="tile-factory-select">
+				<option value='RandomGreen'>Random Green</option>
+				<option value='RandomRed'>Random Red</option>								
+				<option value='RandomBlue'>Random Blue</option>
+				<option value='RandomBlack'>Random Black</option>								
+				<option value='Swedish'>Swedish</option>								
+			</select>				
+		</div>
+		<button id="fill-map-btn">Fill Map</button></span>
+		<br/>
 
-	</div>
+		<h3>On Click</h3>
+		<form action="">
+			<input id="add-radio" type="radio" name="on_click" checked="true" value="add">Add Tile<br>
+			<input id="select-radio" type="radio" name="on_click" value="select">Select Tile<br>			
+			<input id="sprite-radio" type="radio" name="on_click" value="sprite">Add Fire<br>
+			<input id="obstacle-radio" type="radio" name="on_click" value="obstacle">Add Obstacle<br>				
+		</form>
+		
+		<button id="add-tile-btn">Add Tile</button>
+		<br/>
+		
+		<h4>Overlay</h4>
+		<input id="overlay-cbox" type="checkbox" checked="true" >Toggle Overlay</input>
+		<h4>Hoover</h4>
+			<input id="path-cbox" type="checkbox" checked="true" >Toggle Path Select</input></br>
+			<button id="test-hoover-btn">Hoover Cell</button>		
+		<br/>
+		<h4>Animate</h4>
+			<button id="circular-animate-all-btn">Animate</button>
+			<button id="circular-animate-selected-btn">Selected</button>
+			<button id="circular-animate-random-btn">Random</button>
+		<br/>
 
-</script>
+		<h3>Selected</h3>
+		<div><span id="select-info">?,?,?</span></div>
+		<div><span id="hoover-info">?,?,?</span></div>
+		
+	</div>	
+	<!--script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script-->
+	<script src="../lib/TweenMax.min.js"></script>
+	<script type="module">
+		
+		import {HexGrid}  from '../src/grids/HexGrid.js';
+		import * as TF from '../src/TileFactory.js';
+		import {Board} from '../src/Board.js';
+		import {Scene} from '../src/utils/Scene.js';
+		import {MouseCaster} from '../src/utils/MouseCaster.js';
+		import {Tools} from '../src/utils/Tools.js';
+		import {SpriteManager} from '../src/utils/SpriteManager.js';
+		import {CircularMotion} from "../src/animation/CircularMotion.js";
+		
+		var scene = new Scene({
+			element: document.getElementById('view'),
+			cameraPosition: {x:0, y:150, z:150}
+		}, true);
+
+		
+		var tileFactory = TF.RandomGreen;
+		
+		var sm = new SpriteManager({urls:[
+			"./img/fire.png",
+			"./img/earth.png", 
+			"./img/marker.png", 
+			"./img/obstacle.png", 
+			"./img/water.png" 
+		]});
+
+		
+		
+
+		var sprite = sm.makeSprite(0);
+
+		sprite.then( 
+			(s)=>{
+				console.log("got my sprite"+s)
+			 } , e=>console.error(e))
+
+		var grid = new HexGrid({
+			cellSize: 10, // size of individual cells,
+			gridDepth:3
+		});
+	
+		
+		var board = new Board(grid);
+		var mouse = new MouseCaster(board.tileGroup, scene.camera,document.getElementById("view"));
+		
+
+		scene.add(board.group);
+		//scene.add(board.hooverCell);//Fix me
+		scene.focusOn(board.group);
+
+		update();
+
+		function update() {
+			mouse.update();
+			scene.render();
+			requestAnimationFrame(update);
+		}
+	
+
+		const radioAdd = document.getElementById("add-radio");
+		const radioSelect = document.getElementById("select-radio");
+		const obstacleSelect = document.getElementById("obstacle-radio");
+		
+		let lastTile;
+		mouse.signal.add(function(evt, tile) {
+			if (evt === MouseCaster.CLICK) {
+				var cell = tile.cell;
+				if(radioAdd.checked){				
+					if(tile.coord.depth<2){
+						const coord = tile.coord;
+						board.createTileInCell(coord.above,tileFactory);
+					}
+				}
+				else if(radioSelect.checked){
+					board.toggleSelect(tile);
+				}
+				else if(obstacleSelect.checked){
+					sm.makeSprite(3).then( sprite=>{
+						board.setEntityOnTile(sprite,tile);
+						tile.cell.walkable = false;
+					}).catch( e=>console.error(e));
+				}
+				else{
+					sprite.then( sprite=> board.setEntityOnTile(sprite,tile)).catch( e=>console.error(e))
+				}
+				lastTile = tile;
+			}
+			else if(evt==MouseCaster.OVER){
+				//var cell = tile ? tile.cell : board.grid.pixelToCell(mouse.position);
+				//console.log("Over cell:"+cell.q+","+cell.r+","+cell.s);
+				if(tile)showHooverInfo(tile);
+				//Tell the board to show the hoover
+				if(tile.cell.t ==2){
+					board.setHooverColorInvalid();
+				}
+				else{
+					board.setHooverColorValid();
+				}
+				board.hooverOverTile(tile);
+
+				if(lastTile &&document.getElementById("path-cbox").checked){
+					board.toggleSelectAll(false);//Un select all tiles expect the inital one
+					board.toggleSelect(lastTile,true);
+					const path = board.findPath(lastTile,tile);
+					path.forEach(c=>board.toggleSelect(c,true));													
+				}
+			}
+			else if(evt==MouseCaster.OUT){
+				var coord = tile ? tile.cell : board.grid.pixelToCoord(mouse.position);
+				//console.log("Out:"+cell.q+","+cell.r+","+cell.s);
+				board.hooverOverTile(null);
+			}
+
+		}, this);
+
+
+		var animationSettings ={
+			yStartMax:100,yStartMin:50,averageSeconds:1,ease:"Elastic.easeIn.config(1, 0.3)"
+		};
+	
+
+		var fillBtn = document.getElementById('fill-map-btn');
+		fillBtn.addEventListener('click', function() {
+			const layer = 1;			
+			board.createTiles(tileFactory,0,animationSettings);
+		}, false);
+
+		var testHooverBtn = document.getElementById('test-hoover-btn');
+		testHooverBtn.addEventListener('click', function() {
+			var tile =board.getRandomTile();	
+			board.hooverOverTile(tile);	
+		}, false);
+
+		var addTileBtn = document.getElementById('add-tile-btn');
+		addTileBtn.addEventListener('click', function() {
+			var tile =board.getRandomTile();	
+			const coord = tile.coord;
+			var tile =board.createTileInCell(coord.above,tileFactory,animationSettings);
+			
+		}, false);
+
+		
+
+		
+		document.getElementById("ease-select").addEventListener('change',function(val){
+			animationSettings.ease=this.value;
+		},false);
+
+		
+		const boardCfg=document.getElementById("board-cfg-select");
+		document.getElementById("cfg-board-btn").addEventListener('click',function(val){
+			board.configureGrid(JSON.parse(boardCfg.value));
+			board.createCells();
+			lastTile = null;//Clear the selected one
+			
+		},false);
+
+		document.getElementById("tile-factory-select").addEventListener('change',function(val){
+			tileFactory = TF[this.value];			
+		},false);
+
+		var showSelectInfo = function(tile){
+			var c = tile.cell;
+			document.getElementById('select-info').innerText=`q=${c.q} r=${c.r} s=${c.s} t=${c.t}`;
+		}
+		var showHooverInfo = function(tile){
+			var c = tile.cell;
+			document.getElementById('hoover-info').innerText=`q=${c.q} r=${c.r} s=${c.s} t=${c.t}`;
+		}
+
+		document.getElementById("overlay-cbox").addEventListener('click',v=>{
+			board.toggleOverlay(v.currentTarget.checked);
+		},);
+
+		document.getElementById("circular-animate-all-btn").addEventListener('click',v=>{			
+			const a = new CircularMotion({turns:0.5}).tween(board.tileGroup);			
+		},);
+		document.getElementById("circular-animate-random-btn").addEventListener('click',v=>{
+			const tile =board.getRandomTile();						
+			const a = new CircularMotion({turns:2.0}).tween(tile);			
+		},);
+		document.getElementById("circular-animate-selected-btn").addEventListener('click',v=>{			
+			const a = new CircularMotion({turns:1.0}).tween(board.selectedTileGroup);			
+		},);
+		
+		document.getElementById("path-cbox").addEventListener('click',v=>{
+			if(!v.currentTarget.checked)board.toggleSelectAll(false);			
+		},);
+	
+	//});
+
+	
+
+	</script>
 </body>
 </html>

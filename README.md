@@ -2,68 +2,77 @@
 
 ![screenshot](hex-grid.jpg)
 
-I never found a good (and free!) library for creating perfect hexagons and arranging them in a grid. But I did find [Amit's wonderful explanation](http://www.redblobgames.com/grids/hexagons/), and finally had the time to throw something together.
+Refactoring of the excellent von-grid (https://github.com/vonWolfehaus/von-grid) by Corey Birnbaum
 
-You can use the `Board` class with different graph types (hex and square), or you can make your own if you implement the interface.
+## Additional Features 
 
-Please use this to make awesome hex-based web games. Or port the code and make awesome hex games there. Just make awesome hex games, ok?
+- Stacked Tiles 
+- Hoovering
+- Simple Animation 
+	- selected tiles
+	- path tiles
+- Reactangular Grids
+  
 
-## Features
 
-- Simple API for attaching objects to the grid through `Board.js`
-- **A* pathfinding** with or without weighted nodes, and a `walkable` flag
-- Make maps with [the editor](http://vonwolfehaus.github.io/von-grid/editor/) (autosaves to localstorage, and save/load as `.json` files)
-- Varied height
-- Sparse maps
-- **Mouse interaction** with the grid's cells (over, out, down, up, click, wheel)
-- Programmatic geometry, allow you to precisely adjust every aspect of the hexagon
-- Square grid that can be used interchangeably
-- Include only the hex grid by downloading `dist/hex-grid.js`, or all grid types with `von-grid.js`, etc
+## Technical Difference
+- Refactored to ECMA Script 2017, project can run without compiling in latest Chrome browser 
+- Abstract Grid Base class 
+- All files are now ECMA classes
+
+#### Chrome Settings
+
+![screenshot](chrome.png)
 
 #### Roadmap
 
-- Improved editor
-- Improved API
-- Abstract grid
+- Renable Map Loading
+- Make hoover and select work in same way, changing only color of top material
+- 
 
 ## Usage
 
 #### Basic board
 
-![screenshot](hex-grid-basic.jpg)
+![screenshot](screenshot1.jpg)
 
 ```javascript
-var scene = new vg.Scene({ // I made a very handy util for creating three.js scenes quickly
+
+var scene = new Scene({
+	element: document.getElementById('view'),
 	cameraPosition: {x:0, y:150, z:150}
-}, true); // 'true' or a config object adds orbit controls
+}, true);
+var tileFactory = TF.RandomGreen;
 
-var grid = new vg.HexGrid();
+var board = new Board();
 
-grid.generate({
-	size: 4
-});
+var gridDef ={
+	type:hex,
+	cellSize:5,
+	cellHeight:2,
+	area:{rect:{width:64,height:32}},depth:3
+}
 
-var board = new vg.Board(grid);
-
-board.generateTilemap();
+board.configureGrid(gridDef);
+board.createTiles(tileFactory,0);
 
 scene.add(board.group);
 scene.focusOn(board.group);
 
+var mouse = new MouseCaster(board.tileGroup, scene.camera,document.getElementById("view"));
 update();
 
 function update() {
+	mouse.update();
 	scene.render();
 	requestAnimationFrame(update);
 }
 ```
 
-#### Examples
 
-For the simple examples you can drop them into Chrome, but for ones that require images or models, you'll have to run `gulp serve-examples`. A browser tab will be opened to the examples directory for you.
 
 ## Editor
 
 #### [Try it out](http://vonwolfehaus.github.io/von-grid/editor/)
 
-![screenshot](editor.png)
+

@@ -20,48 +20,42 @@
 		}
 	</code></pre>
  */
-(function() {
-	var LinkedListNode = function() {
-		this.obj = null;
-		this.next = null;
-		this.prev = null;
-		this.free = true;
-	};
 
-	var LinkedList = function() {
-		this.first = null;
-		this.last = null;
-		this.length = 0;
-		this.objToNodeMap = {}; // a quick lookup list to map linked list nodes to objects
-		this.uniqueID = Date.now() + '' + Math.floor(Math.random()*1000);
+	class LinkedListNode{
+		constructor() {
+			this.obj = null;
+			this.next = null;
+			this.prev = null;
+			this.free = true;
+		}
+	}
 
-		this.sortArray = [];
-	};
-
-	// static function for utility
-	LinkedList.generateID = function() {
-		return Math.random().toString(36).slice(2) + Date.now();
-	};
-
-	LinkedList.prototype = {
+	export class LinkedList{
+		constructor(){
+			this.first = null;
+			this.last = null;
+			this.length = 0;
+			this.objToNodeMap = {}; // a quick lookup list to map linked list nodes to objects
+			this.uniqueID = Date.now() + '' + Math.floor(Math.random()*1000);
+			this.sortArray = [];
+		}
 		/*
 			Get the LinkedListNode for this object.
 			@param obj The object to get the node for
 		 */
-		getNode: function(obj) {
+		getNode(ob) {
 			// objects added to a list must implement a uniqueID which returns a unique object identifier string
-			return this.objToNodeMap[obj.uniqueID];
-		},
-
+			return this.objToNodeMap[ob.uniqueID];
+		}
 		/*
 			Adds a new node to the list -- typically only used internally unless you're doing something funky
 			Use add() to add an object to the list, not this.
 		 */
-		addNode: function(obj) {
+		addNode(ob) {
 			var node = new LinkedListNode();
-			if (!obj.uniqueID) {
+			if (!ob.uniqueID) {
 				try {
-					obj.uniqueID = LinkedList.generateID();
+					ob.uniqueID = LinkedList.generateID();
 					// console.log('New ID: '+obj.uniqueID);
 				}
 				catch (err) {
@@ -70,23 +64,24 @@
 				}
 			}
 
-			node.obj = obj;
+			node.obj = ob;
 			node.free = false;
-			this.objToNodeMap[obj.uniqueID] = node;
+			this.objToNodeMap[ob.uniqueID] = node;
 			return node;
-		},
+		}
 
-		swapObjects: function(node, newObj) {
+		swapObjects(node, newObj) {
 			this.objToNodeMap[node.obj.uniqueID] = null;
 			this.objToNodeMap[newObj.uniqueID] = node;
 			node.obj = newObj;
-		},
+		}
 
 		/*
 			Add an item to the list
 			@param obj The object to add
 		 */
-		add: function(obj) {
+		add(obj) {
+			if(!obj)throw new Error("obj is null");
 			var node = this.objToNodeMap[obj.uniqueID];
 
 			if (!node) {
@@ -126,17 +121,17 @@
 			this.length++;
 
 			if (this.showDebug) this.dump('after add');
-		},
+		}
 
-		has: function(obj) {
+		has(obj) {
 			return !!this.objToNodeMap[obj.uniqueID];
-		},
+		}
 
 		/*
 			Moves this item upwards in the list
 			@param obj
 		 */
-		moveUp: function(obj) {
+		moveUp(obj) {
 			this.dump('before move up');
 			var c = this.getNode(obj);
 			if (!c) throw "Oops, trying to move an object that isn't in the list";
@@ -163,13 +158,13 @@
 
 			// check to see if we are now first
 			if (this.first == b) this.first = c;
-		},
+		}
 
 		/*
 			Moves this item downwards in the list
 			@param obj
 		 */
-		moveDown: function(obj) {
+		moveDown(obj) {
 			var b = this.getNode(obj);
 			if (!b) throw "Oops, trying to move an object that isn't in the list";
 			if (!b.next) return; // already last, ignore
@@ -183,12 +178,12 @@
 
 			// check to see if we are now last
 			if (this.last == c) this.last = b;
-		},
+		}
 
 		/*
-			Take everything off the list and put it in an array, sort it, then put it back.
+		Take everything off the list and put it in an array, sort it, then put it back.
 		 */
-		sort: function(compare) {
+		sort(compare) {
 			var sortArray = this.sortArray;
 			var i, l, node = this.first;
 			sortArray.length = 0;
@@ -206,14 +201,14 @@
 			for (i = 0; i < l; i++) {
 				this.add(sortArray[i]);
 			}
-		},
+		}
 
 		/*
 			Removes an item from the list
 			@param obj The object to remove
 			@returns boolean true if the item was removed, false if the item was not on the list
 		 */
-		remove: function(obj) {
+		remove(obj) {
 			var node = this.getNode(obj);
 			if (!node || node.free){
 				return false; // ignore this error (trying to remove something not there)
@@ -236,10 +231,10 @@
 			this.length--;
 
 			return true;
-		},
+		}
 
 		// remove the head and return it's object
-		shift: function() {
+		shift() {
 			var node = this.first;
 			if (this.length === 0) return null;
 			// if (node == null || node.free == true) return null;
@@ -262,10 +257,9 @@
 
 			this.length--;
 			return node.obj;
-		},
+		}
 
-		// remove the tail and return it's object
-		pop: function() {
+		pop() {
 			var node = this.last;
 			if (this.length === 0) return null;
 
@@ -287,23 +281,23 @@
 
 			this.length--;
 			return node.obj;
-		},
+		}
 
 		/**
 		 * Add the passed list to this list, leaving it untouched.
 		 */
-		concat: function(list) {
+		concat(list) {
 			var node = list.first;
 			while (node) {
 				this.add(node.obj);
 				node = node.next;
 			}
-		},
+		}
 
 		/**
 		 * Clears the list out
 		 */
-		clear: function() {
+		clear() {
 			var next = this.first;
 
 			while (next) {
@@ -313,9 +307,9 @@
 
 			this.first = null;
 			this.length = 0;
-		},
+		}
 
-		dispose: function() {
+		dispose() {
 			var next = this.first;
 
 			while (next) {
@@ -325,12 +319,12 @@
 			this.first = null;
 
 			this.objToNodeMap = null;
-		},
+		}
 
-		/*
+			/*
 			Outputs the contents of the current list for debugging.
 		 */
-		dump: function(msg) {
+		dump(msg) {
 			console.log('====================' + msg + '=====================');
 			var a = this.first;
 			while (a) {
@@ -341,9 +335,27 @@
 			console.log("Last: {" + (this.last ? this.last.obj : 'NULL') + "} " +
 				"First: {" + (this.first ? this.first.obj : 'NULL') + "}");
 		}
+
+		static generateID() {
+			return Math.random().toString(36).slice(2) + Date.now();
+		};
 	};
 
-	LinkedList.prototype.constructor = LinkedList;
+	// static function for utility
 
-	vg.LinkedList = LinkedList;
-}());
+
+	
+
+		
+
+		
+	
+
+		
+
+
+	
+
+	
+
+	

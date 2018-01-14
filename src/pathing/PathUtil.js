@@ -1,21 +1,21 @@
 /*
 	@source https://github.com/qiao/PathFinding.js/
 */
-vg.PathUtil = {
+
 	/**
 	 * Backtrace according to the parent records and return the path.
 	 * (including both start and end nodes)
 	 * @param {Node} node End node
 	 * @return {Array.<Array.<number>>} the path
 	 */
-	backtrace: function(node) {
+	export function backtrace(node) {
 		var path = [node];
 		while (node._parent) {
 			node = node._parent;
 			path.push(node);
 		}
 		return path.reverse();
-	},
+	}
 
 	/**
 	 * Backtrace from start and end node, and return the path.
@@ -23,18 +23,18 @@ vg.PathUtil = {
 	 * @param {Node}
 	 * @param {Node}
 	 */
-	biBacktrace: function(nodeA, nodeB) {
+	export function biBacktrace(nodeA, nodeB) {
 		var pathA = this.backtrace(nodeA),
 			pathB = this.backtrace(nodeB);
 		return pathA.concat(pathB.reverse());
-	},
+	}
 
 	/**
 	 * Compute the length of the path.
 	 * @param {Array.<Array.<number>>} path The path
 	 * @return {number} The length of the path
 	 */
-	pathLength: function(path) {
+	export function pathLength(path) {
 		var i, sum = 0, a, b, dx, dy;
 		for (i = 1; i < path.length; ++i) {
 			a = path[i - 1];
@@ -44,7 +44,7 @@ vg.PathUtil = {
 			sum += Math.sqrt(dx * dx + dy * dy);
 		}
 		return sum;
-	},
+	}
 
 
 	/**
@@ -57,7 +57,7 @@ vg.PathUtil = {
 	 * @param {number} y1 End y coordinate
 	 * @return {Array.<Array.<number>>} The coordinates on the line
 	 */
-	interpolate: function(x0, y0, x1, y1) {
+	export function interpolate(x0, y0, x1, y1) {
 		var abs = Math.abs,
 			line = [],
 			sx, sy, dx, dy, err, e2;
@@ -85,7 +85,7 @@ vg.PathUtil = {
 		}
 
 		return line;
-	},
+	}
 
 
 	/**
@@ -94,7 +94,7 @@ vg.PathUtil = {
 	 * @param {Array.<Array.<number>>} path The path
 	 * @return {Array.<Array.<number>>} expanded path
 	 */
-	expandPath: function(path) {
+	export function expandPath(path) {
 		var expanded = [],
 			len = path.length,
 			coord0, coord1,
@@ -119,7 +119,7 @@ vg.PathUtil = {
 		expanded.push(path[len - 1]);
 
 		return expanded;
-	},
+	}
 
 
 	/**
@@ -128,7 +128,7 @@ vg.PathUtil = {
 	 * @param {PF.Grid} grid
 	 * @param {Array.<Array.<number>>} path The path
 	 */
-	smoothenPath: function(grid, path) {
+	export function smoothenPath(grid, path) {
 		var len = path.length,
 			x0 = path[0][0],        // path start x
 			y0 = path[0][1],        // path start y
@@ -169,7 +169,7 @@ vg.PathUtil = {
 		newPath.push([x1, y1]);
 
 		return newPath;
-	},
+	}
 
 
 	/**
@@ -178,7 +178,7 @@ vg.PathUtil = {
 	 * @param {Array.<Array.<number>>} path The path
 	 * @return {Array.<Array.<number>>} The compressed path
 	 */
-	compressPath: function(path) {
+	export function compressPath(path) {
 
 		// nothing to compress
 		if (path.length < 3) {
@@ -238,4 +238,4 @@ vg.PathUtil = {
 
 		return compressed;
 	}
-};
+

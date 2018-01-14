@@ -12,3 +12,4 @@ node_modules
 .lock-wscript
 
 hex-map.json
+*.exe
