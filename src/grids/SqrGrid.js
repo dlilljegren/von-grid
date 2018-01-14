@@ -1,3 +1,4 @@
+import * as THREE from './../../lib/three.module.js';
 import {vg} from '../vg.js'
 import {Cell} from './Cell.js'; 
 import {Coord} from './Coord.js'; 

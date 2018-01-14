@@ -1,3 +1,4 @@
+import * as THREE from './../../lib/three.module.js';
 import {HexGrid} from './grids/HexGrid.js'
 import {SqrGrid} from './grids/SqrGrid.js'
 import {Cell} from './grids/Cell.js'
@@ -6,7 +7,7 @@ import {Loader} from './utils/Loader.js'
 import {Tools} from './utils/Tools.js'
 import {vg} from './vg.js'
 import {TileFactory} from './TileFactory.js'
-import * as THREE from '../../lib/three.module.js';
+
 
 /*
 	Interface to the grid. Holds data about the visual representation of the cells (tiles).

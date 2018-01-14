@@ -1,5 +1,6 @@
-import {Signal} from '../lib/Signal.js'
-import * as THREE from '../../lib/three.module.js';
+import * as THREE from './../../lib/three.module.js';
+import {Signal} from './../lib/Signal.js'
+
 /*
 	Translates mouse interactivity into 3D positions, so we can easily pick objects in the scene.
 

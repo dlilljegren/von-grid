@@ -1,5 +1,5 @@
+import * as THREE from './../../lib/three.module.js';
 import {vg} from '../vg.js'
-import * as THREE from '../../lib/three.module.js';
 import {MutableCoord,Coord}  from './Coord.js'
 import {Cell}  from './Cell.js'
 

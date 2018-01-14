@@ -1,9 +1,10 @@
+import * as THREE from './../../lib/three.module.js';
 import {Coord} from './Coord.js'; 
 import {Cell} from './Cell.js'; 
 import {Tile} from './Tile.js'; 
 import {AbstractGrid} from './AbstractGrid.js'; 
 import {vg} from '../vg.js'
-import * as THREE from '../../lib/three.module.js';
+
 
 /*
 	Graph of hexagons. Handles grid cell management (placement math for eg pathfinding, range, etc) and grid conversion math.

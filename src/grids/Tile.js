@@ -1,7 +1,8 @@
+import * as THREE from './../../lib/three.module.js';
 import {Tools} from '../utils/Tools.js'
 import {vg} from '../vg.js'
 
-import * as THREE from '../../lib/three.module.js';
+
 /*
 	Example tile class that constructs its geometry for rendering and holds some gameplay properties.
 
