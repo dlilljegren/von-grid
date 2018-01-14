@@ -1,4 +1,4 @@
-import * as THREE from './../../lib/three.module.js';
+import * as THREE from './../lib/three.module.js';
 import {HexGrid} from './grids/HexGrid.js'
 import {SqrGrid} from './grids/SqrGrid.js'
 import {Cell} from './grids/Cell.js'
