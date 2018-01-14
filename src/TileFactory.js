@@ -1,4 +1,4 @@
-import * as THREE from './../../lib/three.module.js';
+import * as THREE from './../lib/three.module.js';
 import {Tile} from './grids/Tile.js';
 import {Tools} from './utils/Tools.js';
 import * as FlagDrawer from '../src/FlagCanvasDrawer.js';
