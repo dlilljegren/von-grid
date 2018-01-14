@@ -1,7 +1,5 @@
 # 3D hex tile system
 
-![screenshot](hex-grid.jpg)
-
 Refactoring of the excellent von-grid (https://github.com/vonWolfehaus/von-grid) by Corey Birnbaum
 
 ## Additional Features 
@@ -34,7 +32,7 @@ Refactoring of the excellent von-grid (https://github.com/vonWolfehaus/von-grid)
 
 #### Basic board
 
-![screenshot](screenshot1.jpg)
+![screenshot](screenshot1.png)
 
 ```javascript
 
