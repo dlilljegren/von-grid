@@ -34,20 +34,23 @@ export class Board{
 		this.tileGroup = new THREE.Object3D();
 		this.group.add(this.tileGroup);
 
-		this.hooverValidColor = new THREE.Color(0x1aaeff);
-		this.hooverInvalidColor = new THREE.Color(0xff2222);
+		//Set-up hoover
+		this.hooverGroup = new THREE.Object3D();
+		this.group.add(this.hooverGroup);
+
+		this.hooverManagers = new Map();
+		//Create the default hoover manager
+		this.hooverManagers.set("default", new HooverManager(
+			{
+
+			},			
+			this));
+		
 		
 		this.selectedTileGroup = new THREE.Object3D();
 		this.tileGroup.add(this.selectedTileGroup);
 
-		//Hoover material
-		this.hooverMaterial = new THREE.MeshBasicMaterial(
-			{
-				color: 0x1aaeff,
-				side: THREE.DoubleSide,
-				opacity: 0.4,
-				transparent : true
-		});
+		
 		this.setGrid(grid); 
 		
 	};
@@ -135,25 +138,9 @@ export class Board{
 
 	
 
-	hooverOverTile(tile){
-		if(!this.hooverCell)return;
-		if(!tile){
-			this.hooverCell.visible=false;
-		}
-		else{
-			var pos = this.grid.coordToPixel(tile.cell);
-			this.hooverCell.position.copy(pos);
-			this.hooverCell.position.y=pos.y+this.grid.cellHeight+0.1;
-			this.hooverCell.visible=true;
-		}
-	}
+	
 
-	setHooverColorValid(){
-		this.hooverCell.material.color = this.hooverValidColor;
-	}
-	setHooverColorInvalid(){
-		this.hooverCell.material.color = this.hooverInvalidColor;
-	}
+
 
 	
 
@@ -167,6 +154,7 @@ export class Board{
 	}
 
 	createTiles(tileFactory,layer,animationSettings){
+		this.removeAllTiles();		
 		if(!(tileFactory instanceof TileFactory)) throw new Error('You must pass in an instance of a TileFactory');
 		const depth = layer || 0;
 		for(const coord of this.grid.coordsInLayer(depth)){
@@ -235,6 +223,7 @@ export class Board{
 	 * @param {*} heuristic 
 	 */
 	findPath(startTile, endTile, heuristic) {
+		if(startTile.cell == null || endTile.cell == null) return [];
 		return this.finder.findPath(startTile.cell, endTile.cell, heuristic, this.grid);
 	}
 
@@ -255,19 +244,8 @@ export class Board{
 
 
 	_initHoover(grid){
-		if(this.hooverCell){
-			this.group.remove(this.hooverCell);
-		}
-		if(grid){			
-			this.hooverCell = grid.generateTilePoly(this.hooverMaterial);
-			this.group.add(this.hooverCell);
-			this.hooverCell.visible = false;
-			this.hooverCell.position.y =2; 
-			this.hooverCell.name = "HooverCell";
-			
-		}
-		else{
-			this.hooverCell = null;
+		for(const hm of this.hooverManagers.values()){
+			hm._setGrid(grid);
 		}
 	}
 
@@ -278,11 +256,11 @@ export class Board{
 	}
 
 	/**
-	 * Make the hoover hex invisible
+	 * Make the hoover cursors invisible
 	 */
 	toggleHoover(on){
-		const newState = on || !this.hooverCell.visible;
-		this.hooverCell.visible=false;
+		const newState = on || !this.hooverGroup.visible;
+		this.hooverGroup.visible=newState;
 	}
 
 	toggleSelect(tile,on){
@@ -307,6 +285,25 @@ export class Board{
 		this.tiles.forEach(t=>this.toggleSelect(t,false));
 	}
 
+
+	hooverOverTile(tile,hooverManagerId){
+		const id = hooverManagerId || "default";		
+		this.hooverManagers.get(id).hooverOverTile(tile);
+	}
+	/**
+	 * Add a Hoover manager allowing to have more than one cursor moving around the board
+	 * @param {string} hooverManagerId 
+	 * @param {*} hooverCfg 
+	 */
+	createHooverManager(hooverManagerId,hooverCfg){
+		this.hooverManagers.set(name, new HooverManager(			
+			hooverCfg,this));
+	}
+
+	removeHooverManager(hooverManagerId){
+		this.hooverManagers.delete(hooverManagerId);
+	}
+
 	_generateOverlay() {
 		var mat = new THREE.LineBasicMaterial({
 			color: 0x000000,
@@ -323,6 +320,86 @@ export class Board{
 		// removes all tiles from the scene, but leaves the grid intact
 		this.removeAllTiles();		
 	}
+	
 };
+
+
+class HooverManager{
+
+	constructor(config,board){
+		
+		this.name = config.name || "Unknown";
+		this.board = board;
+		this.group = board.hooverGroup;
+		
+		this.valid = true;
+
+		this.validColor = config.validColor|| new THREE.Color(0x1aaeff);
+		this.invalidColor = config.invalidColor || new THREE.Color(0xff2222);
+
+		this.hooverMesh = null;
+
+		//Hoover material
+		this.hooverMaterial = config.material || new THREE.MeshBasicMaterial(
+			{
+				color: this.validColor,
+				side: THREE.DoubleSide,
+				opacity: 0.4,
+				transparent : true
+		});
+		this.hooverMaterial.depthTest = false;//This make sure somehow that the hoover renders correctly
+	}
+	
+
+	toogleValid(on){
+		const newState = on || !this.valid;
+		if(newState != this.valid){
+			this.hooverMaterial.color = newState ? this.validColor : this.invalidColor;
+		}		
+	}
+	/**
+	 * When a new grid is initialized we recreate the cursor mesh
+	 * @param {AbstractGrid} grid 
+	 */
+	_setGrid(grid){
+		if(this.hooverMesh){
+			this.group.remove(this.hooverMesh);			
+		}
+		if(grid){			
+			this.hooverMesh = grid.generateTilePoly(this.hooverMaterial);
+			this.group.add(this.hooverMesh);
+			this.hooverMesh.visible = false;
+
+			this.hooverMesh.position.y =grid.cellHeight; 
+			this.hooverMesh.name = "Hoover_"+this.name;	
+			this.hooverMesh.renderOrder = 1;		
+			this.hooverMesh.scale.set(0.8, 0.8, 1);
+			this.grid = grid;
+		}
+		else{
+			this.hooverMesh = null;
+		}
+	}
+
+	hooverOverTile(tile){
+		if(!this.hooverMesh)return;
+		if(!tile){
+			this.hooverMesh.visible=false;
+		}
+		else{
+			const cell = tile.cell;
+			this.toogleValid(cell.hooverValid());
+			
+			var pos = this.grid.coordToPixel(tile.cell);
+			this.hooverMesh.position.copy(pos);
+			//this.hooverMesh.position.y=pos.y+this.grid.cellHeight;
+			const box = tile.geometry.boundingBox;
+			const offsetY = box.max.z -box.min.z;
+			this.hooverMesh.position.y=pos.y+(tile.geometry.boundingBox.max.z+tile.geometry.boundingBox.min.z);
+			this.hooverMesh.visible=true;
+		}
+	}
+
+}
 
 

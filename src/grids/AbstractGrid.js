@@ -162,6 +162,15 @@ export class AbstractGrid{
 		return cell;
 	}
     
+    clearPath() {		
+		for (const c of this.cells.values()) {			
+			c._calcCost = 0;
+			c._priority = 0;
+			c._parent = null;
+			c._visited = false;
+		}
+	}
+
     coordToHash(cell) {
 		throw Error("coordToHash implementation missing in subclass");
     }

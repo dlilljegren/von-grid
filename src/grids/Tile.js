@@ -73,19 +73,24 @@ export class Tile{
 	}
 
 	_select(){
+		
 		//Change the material of the sides of the material to black so we get like a border
 		this.mesh.material[1] = this.selectedMaterial;
 		this.selected = true;
 		return this;
 	}
-	_deselect(){
+	_deselect(){		
 		this.mesh.material[1] = this.material;
-		this.selected = false;
+		this.selected = false;		
 		return this;
 	}
 
 	_toggleSelect(on) {
 		const newState = on==null ? !this.selected : on;
+		if(newState == this.selected){
+			return this;
+		}
+		
 		if (newState) {
 			this._select();
 		}

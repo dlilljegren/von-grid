@@ -34,10 +34,11 @@
 			<div>			
 				<select id="board-cfg-select">
 					<option value='{"type":"hex","cellSize":5,"cellHeight":2, "area":{"rect":{"width":64,"height":32}},"depth":3}'>Hex Size:5 Rect:64x32</option>
-					<option value='{"type":"hex","cellSize":20,"area":{"circle":{"radius":4}},"depth":3}'>Hex Size:10 Circle:4</option>
-					<option value='{"type":"hex","cellSize":4,"cellHeight":2, "area":{"rect":{"width":256,"height":64}},"depth":3}'>Hex Size:5 Rect:256x64</option>
+					<option value='{"type":"hex","cellSize":20,"area":{"circle":{"radius":4}},"depth":3}'>Hex Size:20 Circle:4</option>
+					<option value='{"type":"hex","cellSize":4,"cellHeight":2, "area":{"rect":{"width":256,"height":64}},"depth":3}'>Hex Size:4 Rect:256x64</option>
 					<option value='{"type":"square","cellSize":10,"area":{"circle":{"radius":3}},"depth":3}'>Sqr Size:10 Circle:4</option>
-					<option value='{"type":"square","cellSize":5,"area":{"rect":{"width":64,"height":32}},"depth":3}'>Sqr Size:5 Rect:64x32</option>								
+					<option value='{"type":"square","cellSize":5,"area":{"rect":{"width":64,"height":32}},"depth":3}'>Sqr Size:5x1 Rect:64x32</option>								
+					<option value='{"type":"square","cellSize":5,"cellHeight":3,"area":{"rect":{"width":64,"height":32}},"depth":3}'>Sqr Size:5x3 Rect:64x32</option>								
 				</select>				
 			</div>			
 			<button id="cfg-board-btn">Set Grid</button>	
@@ -81,6 +82,7 @@
 		<input id="overlay-cbox" type="checkbox" checked="true" >Toggle Overlay</input>
 		<h4>Hoover</h4>
 			<input id="path-cbox" type="checkbox" checked="true" >Toggle Path Select</input></br>
+			<input id="hoover-cbox" type="checkbox" checked="true" >Toggle Hoover</input></br>
 			<button id="test-hoover-btn">Hoover Cell</button>		
 		<br/>
 		<h4>Animate</h4>
@@ -187,14 +189,7 @@
 			else if(evt==MouseCaster.OVER){
 				//var cell = tile ? tile.cell : board.grid.pixelToCell(mouse.position);
 				//console.log("Over cell:"+cell.q+","+cell.r+","+cell.s);
-				if(tile)showHooverInfo(tile);
-				//Tell the board to show the hoover
-				if(tile.cell.t ==2){
-					board.setHooverColorInvalid();
-				}
-				else{
-					board.setHooverColorValid();
-				}
+				if(tile)showHooverInfo(tile);				
 				board.hooverOverTile(tile);
 
 				if(lastTile &&document.getElementById("path-cbox").checked){
@@ -221,6 +216,7 @@
 		var fillBtn = document.getElementById('fill-map-btn');
 		fillBtn.addEventListener('click', function() {
 			const layer = 1;			
+			lastTile = null;
 			board.createTiles(tileFactory,0,animationSettings);
 		}, false);
 
@@ -284,6 +280,10 @@
 		
 		document.getElementById("path-cbox").addEventListener('click',v=>{
 			if(!v.currentTarget.checked)board.toggleSelectAll(false);			
+		},);
+
+		document.getElementById("hoover-cbox").addEventListener('click',v=>{
+			board.toggleHoover(!v.currentTarget.checked);			
 		},);
 	
 	//});

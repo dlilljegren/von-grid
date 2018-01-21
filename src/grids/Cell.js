@@ -28,7 +28,12 @@ export class Cell{
 		this.uniqueID = LinkedList.generateID();
 	}
 
-	
+	/**
+	 * Determine if the hoover cursor should be rendered as valid or invalid
+	 */
+	hooverValid(){
+		return this.walkable === true;
+	}
 
 	set(q, r, s, t) {
 		throw Error("Check me")

@@ -27,6 +27,7 @@ export class TileFactory{
 		if (!geo) {
 			this._extrudeSettings.amount = grid.cellHeight/2;
 			geo = new THREE.ExtrudeGeometry(grid.cellShape, this._extrudeSettings);
+			geo.computeBoundingBox();
 			this._geometryCache.set(grid, geo);
 		}
 
@@ -81,7 +82,7 @@ class RandomColorFactory extends AbstractMaterialFactory{
 	}
 	
 	createBodyMaterial(cell){
-		const col = Tools.randomizeRGB('100, 10, 10',10);
+		const col = Tools.randomizeRGB(this.rgb,10);
 		var m = materialCache.get(col);
 		if(!m){
 			m = new THREE.MeshPhongMaterial({
