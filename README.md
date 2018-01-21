@@ -72,6 +72,6 @@ function update() {
 
 ## Editor
 
-#### [Try it out](http://vonwolfehaus.github.io/von-grid/editor/)
+#### [Try it out](https://dlilljegren.github.io/von-grid/examples/)
 
 
