@@ -9,3 +9,11 @@
 	min-height: 200px;
 	background-color: rgba(200, 200, 200, 0.8);
 }
+
+#hoover-hex-coord{
+	font-size: 10px;
+}
+
+#hoover-tree-coord{
+	font-size: 10px;
+}

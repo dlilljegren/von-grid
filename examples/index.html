@@ -91,9 +91,9 @@
 			<button id="circular-animate-random-btn">Random</button>
 		<br/>
 
-		<h3>Selected</h3>
-		<div><span id="select-info">?,?,?</span></div>
-		<div><span id="hoover-info">?,?,?</span></div>
+		<h3>Hoover Info</h3>	
+		<div><span id="hoover-hex-coord">?,?,?</span></div>
+		<div><span id="hoover-tree-coord">?,?,?</span></div>
 		
 	</div>	
 	<!--script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script-->
@@ -260,7 +260,16 @@
 		}
 		var showHooverInfo = function(tile){
 			var c = tile.cell;
-			document.getElementById('hoover-info').innerText=`q=${c.q} r=${c.r} s=${c.s} t=${c.t}`;
+			document.getElementById('hoover-hex-coord').innerText=`q:${c.q} r:${c.r} s:${c.s} t:${c.t} row:${c.row} col:${c.col}`;
+			
+			if(tile.mesh){
+				const pos = tile.mesh.position;
+				document.getElementById('hoover-tree-coord').innerText=`x:${pos.x} y:${pos.y} z:${pos.z}`;
+			}
+			else{
+				document.getElementById('hoover-tree-coord').innerText="";
+			}
+			
 		}
 
 		document.getElementById("overlay-cbox").addEventListener('click',v=>{
