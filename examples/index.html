@@ -41,7 +41,8 @@
 					<option value='{"type":"square","cellSize":5,"cellHeight":3,"area":{"rect":{"width":64,"height":32}},"depth":3}'>Sqr Size:5x3 Rect:64x32</option>								
 				</select>				
 			</div>			
-			<button id="cfg-board-btn">Set Grid</button>	
+			<button id="cfg-board-btn">Set Grid</button>
+			<button id="load-board-btn">Custom Board</button>	
 		</div>
 		
 
@@ -64,7 +65,8 @@
 				<option value='Swedish'>Swedish</option>								
 			</select>				
 		</div>
-		<button id="fill-map-btn">Fill Map</button></span>
+		<button id="make-map-btn">Make Map</button>
+		
 		<br/>
 
 		<h3>On Click</h3>
@@ -94,7 +96,7 @@
 		<h3>Hoover Info</h3>	
 		<div><span id="hoover-hex-coord">?,?,?</span></div>
 		<div><span id="hoover-tree-coord">?,?,?</span></div>
-		
+		<div><input id="fog-slide" type="range" min="1" max="2000" step="10" value="1" data-orientation="vertical"></div>
 	</div>	
 	<!--script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.20.3/TweenMax.min.js"></script-->
 	<script src="../lib/TweenMax.min.js"></script>
@@ -102,20 +104,25 @@
 		
 		import {HexGrid}  from '../src/grids/HexGrid.js';
 		import * as TF from '../src/TileFactory.js';
+		import {MapCreator} from '../src/MapCreator.js';
 		import {Board} from '../src/Board.js';
 		import {Scene} from '../src/utils/Scene.js';
 		import {MouseCaster} from '../src/utils/MouseCaster.js';
 		import {Tools} from '../src/utils/Tools.js';
 		import {SpriteManager} from '../src/utils/SpriteManager.js';
 		import {CircularMotion} from "../src/animation/CircularMotion.js";
-		
+		import {Fog} from "../lib/three.module.js";
+		import {FogExp2} from "../lib/three.module.js";
+
 		var scene = new Scene({
 			element: document.getElementById('view'),
-			cameraPosition: {x:0, y:150, z:150}
+			cameraPosition: {x:0, y:150, z:150},
+			fog: new Fog(0xaaaaaa, 1, 1000)
+			//fog: new FogExp2(0xaaaaaa, 0.005)
 		}, true);
 
 		
-		var tileFactory = TF.RandomGreen;
+		
 		
 		var sm = new SpriteManager({urls:[
 			"./img/fire.png",
@@ -135,41 +142,44 @@
 				console.log("got my sprite"+s)
 			 } , e=>console.error(e))
 
-		var grid = new HexGrid({
-			cellSize: 10, // size of individual cells,
-			gridDepth:3
-		});
+	
 	
 		
-		var board = new Board(grid);
+		var board = new Board();
 		var mouse = new MouseCaster(board.tileGroup, scene.camera,document.getElementById("view"));
 		
 
-		scene.add(board.group);
-		//scene.add(board.hooverCell);//Fix me
+		scene.add(board.group);		
 		scene.focusOn(board.group);
 
 		update();
 
-		function update() {
+		function update() {			
 			mouse.update();
+			scene.container.fog.far = scene.camera.position.y*2;//Fog increases when we zoom, this compensates the other way
 			scene.render();
+			
+			scene.camera;
+			
 			requestAnimationFrame(update);
 		}
 	
+		
 
 		const radioAdd = document.getElementById("add-radio");
 		const radioSelect = document.getElementById("select-radio");
 		const obstacleSelect = document.getElementById("obstacle-radio");
 		
 		let lastTile;
+		let terrain = "RandomGreen"
+
 		mouse.signal.add(function(evt, tile) {
 			if (evt === MouseCaster.CLICK) {
 				var cell = tile.cell;
 				if(radioAdd.checked){				
 					if(tile.coord.depth<2){
 						const coord = tile.coord;
-						board.createTileInCell(coord.above,tileFactory);
+						board.createTileInCell(coord.above,terrain);
 					}
 				}
 				else if(radioSelect.checked){
@@ -213,12 +223,13 @@
 		};
 	
 
-		var fillBtn = document.getElementById('fill-map-btn');
+		var fillBtn = document.getElementById('make-map-btn');
 		fillBtn.addEventListener('click', function() {
 			const layer = 1;			
 			lastTile = null;
-			board.createTiles(tileFactory,0,animationSettings);
+			board.createTiles(terrain,0,animationSettings);
 		}, false);
+
 
 		var testHooverBtn = document.getElementById('test-hoover-btn');
 		testHooverBtn.addEventListener('click', function() {
@@ -230,7 +241,7 @@
 		addTileBtn.addEventListener('click', function() {
 			var tile =board.getRandomTile();	
 			const coord = tile.coord;
-			var tile =board.createTileInCell(coord.above,tileFactory,animationSettings);
+			var tile =board.createTileInCell(coord.above,terrain,animationSettings);
 			
 		}, false);
 
@@ -251,7 +262,7 @@
 		},false);
 
 		document.getElementById("tile-factory-select").addEventListener('change',function(val){
-			tileFactory = TF[this.value];			
+			terrain = this.value;			
 		},false);
 
 		var showSelectInfo = function(tile){
@@ -294,7 +305,19 @@
 		document.getElementById("hoover-cbox").addEventListener('click',v=>{
 			board.toggleHoover(!v.currentTarget.checked);			
 		},);
-	
+		
+		document.getElementById("load-board-btn").addEventListener('click',v=>{
+			const mapCreator = new MapCreator();
+			board.configureGrid(mapCreator.createConfig());
+
+		},);
+
+		document.getElementById("fog-slide").addEventListener('change',v=>{
+			scene.container.fog.far = v.currentTarget.value;
+			
+			console.log("CameraY:"+scene.camera.position.y+" value:"+scene.container.fog.far);
+		},);
+		
 	//});
 
 	

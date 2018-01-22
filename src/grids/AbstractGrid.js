@@ -2,7 +2,7 @@ import * as THREE from './../../lib/three.module.js';
 import {vg} from '../vg.js'
 import {MutableCoord,Coord}  from './Coord.js'
 import {Cell}  from './Cell.js'
-
+import * as Generator from './CoordGenerators.js'
 export class AbstractGrid{
 
     constructor(config){
@@ -21,12 +21,12 @@ export class AbstractGrid{
 			const width = area.rect.width || 64;
 			const height = area.rect.height || 32;
             
-            this._coordsInPlane = ()=>this.generateRect(width,height);//coordsInPlane is a generator wont get evaluated here
+            this._coordsInPlane = ()=>this.rectArea(width,height);//coordsInPlane is a generator wont get evaluated here
                 
 		}
 		else if(area.circle){
             const radius = area.circle.radius || 10;			
-            this._coordsInPlane = ()=>this.cube_ring_fill(radius,Coord.ORIGO);                             
+            this._coordsInPlane = ()=>this.circleArea(radius,Coord.ORIGO);                             
 		}
 		else{
 			throw new Error(`Unknown area:${area}`);
@@ -34,58 +34,25 @@ export class AbstractGrid{
     }
 
     // create a flat, square-shaped grid
-	*generateRect(width,height) {		
-		var x, y, c;
-		var halfW = Math.ceil(width / 2);
-		var halfH = Math.ceil(height / 2);
-		for (x = -halfW; x < halfW; x++) {
-			for (y = -halfH; y < halfH; y++) {
-				const coord = Coord.RCD(y,x,0);				
-				yield coord;
-			}
-		}
+	rectArea(width,height) {	
+        return Generator.rectArea(width,height);        
 	}
 
-    *cube_ring(radius,centerCoord){
-        centerCoord = centerCoord || Coord.QRT(0,0,0);
-        var results = []
-        // this code doesn't work for radius == 0; can you see why?
-        var cube = centerCoord.add(Coord.hexDirections[4].scale(radius));            
-        for(var i=0;i<6;i++){
-            for(var j=0;j<radius;j++){
-                //results.push(cube);
-                yield cube;
-                cube = cube.hexNeighbour(i);
-            }
-        }
-        //return results
+
+    circleArea(radius,centerCoord){
+        return Generator.circleArea(radius,centerCoord);        
     }
 
-    *cube_ring_fill(radius,centerCoord){
-        centerCoord = centerCoord || Coord.QRT(0,0,0);
-        var result = [];
-        for(let r =1;r<=radius;r++){
-            //result = result.concat(this.cube_ring(r,centerCoord));
-            for(const c of this.cube_ring(r,centerCoord))
-                yield c;
-        }
-        yield centerCoord;        
+    /**
+     * Return all coord in a rectangle around the centre
+     * @param {int} rows 
+     * @param {int} cols 
+     * @param {*} centerCoord 
+     */
+    rect_ring(rows,cols,centerCoord){
+        return Generator.rect_ring(rows,cols,centerCoord);
     }
-
-
-    *rect_ring(rows,cols,centerCoord){
-        centerCoord = centerCoord || Coord.QRT(0,0,0);        
-        var rHalf = Math.floor(rows/2);
-        var cHalf = Math.floor(cols/2);
-        var cube = centerCoord.add(Coord.sqrDirections[1].scale(rHalf),Coord.sqrDirections[2].scale(cHalf));            
-        for(var i=0;i<4;i++){
-            const steps = (i==0 || i==2) ? cols : rows;
-            for(const j=0;j<steps;j++){
-                yield cube;
-                cube = cube.sqrNeighbour(i);
-            }
-        }        
-    }
+     
 
     *coordsInLayer(layer){
         const d = layer || 0;

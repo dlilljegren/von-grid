@@ -20,6 +20,7 @@ export class Cell{
 		this.tile = null; // optional link to the visual representation's class instance
 		this.userData = {}; // populate with any extra data needed in your game
 		this.walkable = true; // if true, pathfinder will use as a through node
+		this.fog = false;
 		// rest of these are used by the pathfinder and overwritten at runtime, so don't touch
 		this._calcCost = 0;
 		this._priority = 0;

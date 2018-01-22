@@ -1,13 +1,14 @@
 import * as THREE from './../lib/three.module.js';
 import {HexGrid} from './grids/HexGrid.js'
 import {SqrGrid} from './grids/SqrGrid.js'
+import {AbstractGrid} from './grids/AbstractGrid.js'
 import {Cell} from './grids/Cell.js'
 import {AStarFinder} from './pathing/AStarFinder.js'
 import {Loader} from './utils/Loader.js'
 import {Tools} from './utils/Tools.js'
 import {vg} from './vg.js'
 import {TileFactory} from './TileFactory.js'
-
+import {Lookup} from './TileFactory.js'
 
 /*
 	Interface to the grid. Holds data about the visual representation of the cells (tiles).
@@ -16,21 +17,19 @@ import {TileFactory} from './TileFactory.js'
 	@author David Lilljegren
  */
 export class Board{
-	constructor(grid, finderConfig) {
-		if (!grid) throw new Error('You must pass in a grid system for the board to use.');
+	constructor(finderConfig) {
+		
 
 		this.tiles = [];
 		this.selectedTiles=new Set();
 		this.group = new THREE.Object3D(); // can hold all entities, also holds tileGroup, never trashed
 		
-		this.grid = null;
+		
 		this.overlay = new THREE.Object3D();
 		this.group.add(this.overlay);
 
 		this.finder = new AStarFinder(finderConfig);
-		// need to keep a resource cache around, so this Loader does that, use it instead of THREE.ImageUtils
-		this.Loader = new Loader();
-
+		
 		this.tileGroup = new THREE.Object3D();
 		this.group.add(this.tileGroup);
 
@@ -50,9 +49,9 @@ export class Board{
 		this.selectedTileGroup = new THREE.Object3D();
 		this.tileGroup.add(this.selectedTileGroup);
 
-		
-		this.setGrid(grid); 
-		
+		this.tileFactoryFunction = Lookup;
+
+		this.setGrid(new HexGrid());
 	};
 	configureGrid(config){
 		let g = config.type;
@@ -66,6 +65,12 @@ export class Board{
 				throw new Error(`Unknown grid type:${config.type}`);
 		}
 		this.setGrid(grid);
+
+		if(config.cells){			
+			for(const cell of config.cells){				
+				this.createTileInCell(cell,cell.terrain,config.animationSettings);
+			}
+		}
 	}
 
 	setEntityOnTile(entity, tile) {
@@ -101,7 +106,7 @@ export class Board{
 		tile.cell.tile = tile;
 	}
 
-	createTileInCell(coord,tileCreator,animationSettings){
+	createTileInCell(coord,terrain,animationSettings){
 		//var c = {q:q,r:r,s:-q-r,t:t};
 
 		var cell;
@@ -117,7 +122,11 @@ export class Board{
 			this.removeTile(tile);
 		}
 
-		var tile =tileCreator.create(cell,this.grid);
+		const tileFactory = this.tileFactoryFunction(terrain);
+		if(tileFactory==null) throw new Error("No tileFactory found for terrain:"+terrain);
+		var tile =tileFactory.create(cell,this.grid);
+		tile.position.y = 0;
+
 		this.snapTileToGrid(tile);
 	
 
@@ -153,12 +162,11 @@ export class Board{
 		}
 	}
 
-	createTiles(tileFactory,layer,animationSettings){
-		this.removeAllTiles();		
-		if(!(tileFactory instanceof TileFactory)) throw new Error('You must pass in an instance of a TileFactory');
+	createTiles(terrain,layer,animationSettings){
+		this.removeAllTiles();				
 		const depth = layer || 0;
 		for(const coord of this.grid.coordsInLayer(depth)){
-			this.createTileInCell(coord,tileFactory,animationSettings)
+			this.createTileInCell(coord,terrain,animationSettings)
 		}
 	}
 
@@ -230,6 +238,7 @@ export class Board{
 
 
 	setGrid(newGrid) {		
+		if(!(newGrid instanceof AbstractGrid)) throw new Error(`${newGrid} is not an instance of AbstractGrid`);
 		if (this.grid && newGrid !== this.grid) {
 			this.removeAllTiles();			
 			this.grid.dispose();
@@ -250,8 +259,8 @@ export class Board{
 	}
 
 
-	toggleOverlay(on){
-		const newState = on || !this.overlay.visible;
+	toggleOverlay(on){		
+		const newState = on==null ? !this.overlay.visible : on;
 		this.overlay.visible = !this.overlay.visible;
 	}
 
@@ -259,7 +268,7 @@ export class Board{
 	 * Make the hoover cursors invisible
 	 */
 	toggleHoover(on){
-		const newState = on || !this.hooverGroup.visible;
+		const newState = on==null ? !this.hooverGroup.visible :on;
 		this.hooverGroup.visible=newState;
 	}
 
@@ -267,7 +276,7 @@ export class Board{
 		if(tile instanceof Cell){
 			tile = tile.tile;
 		}
-		//const newState = on || !tile.selected;
+		
 		const newState = on ==null ? !tile.selected : on;
 		tile._toggleSelect(newState);
 		if(newState){
@@ -307,7 +316,8 @@ export class Board{
 	_generateOverlay() {
 		var mat = new THREE.LineBasicMaterial({
 			color: 0x000000,
-			opacity: 0.3
+			opacity: 0.3,
+			fog:false
 		});
 		for (var i = this.overlay.children.length - 1; i >= 0; i--) {
 			this.overlay.remove(this.overlay.children[i]);
@@ -352,9 +362,10 @@ class HooverManager{
 	
 
 	toogleValid(on){
-		const newState = on || !this.valid;
+		const newState = on ==null ? !this.valid : on;
 		if(newState != this.valid){
 			this.hooverMaterial.color = newState ? this.validColor : this.invalidColor;
+			this.valid = newState;
 		}		
 	}
 	/**

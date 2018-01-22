@@ -36,8 +36,8 @@ export class TileFactory{
 			scale: this.scale,
 			cell: cell,
 			geometry: geo,
-			material: this._materialFactory.createBodyMaterial(),
-			upMaterial : this._materialFactory.createUpMaterial()
+			material: this._materialFactory.createBodyMaterial(cell),
+			upMaterial : this._materialFactory.createUpMaterial(cell)
 			//selectedMaterial
 		});
 		return tile;
@@ -83,12 +83,16 @@ class RandomColorFactory extends AbstractMaterialFactory{
 	
 	createBodyMaterial(cell){
 		const col = Tools.randomizeRGB(this.rgb,10);
-		var m = materialCache.get(col);
+		const key = `${col} ${cell.fog}`;
+		var m = materialCache.get(key);
 		if(!m){
 			m = new THREE.MeshPhongMaterial({
-				color: col
+				color: col,
+				//emissive:0xaaaaaa
+				fog:cell.fog
 			})
-			materialCache.set(col,m);
+			//m.lights = false;
+			materialCache.set(key,m);
 		} 
 		return m;
 	}	
@@ -113,15 +117,26 @@ class FlagFactory extends AbstractMaterialFactory{
 		switch(country){
 			case "Sweden": default:
 				this.upMaterial = FlagDrawer.createSwedishMaterial();
+				this.upMaterial.fog = false;
+
+				this.upMaterialFog = FlagDrawer.createSwedishMaterial();
+				this.upMaterialFog.fog = true;
+
 				this.bodyMaterial =new THREE.MeshPhongMaterial({color:new THREE.Color(0x002654)});
+				this.bodyMaterial.fog = false;
+
+				this.bodyMaterialFog =new THREE.MeshPhongMaterial({color:new THREE.Color(0x002654)});
+				this.bodyMaterialFog.fog = true;
 				break;	
 		}
 	}
 
 	createBodyMaterial(cell){
+		if(cell.fog) return this.bodyMaterial.fog;
 		return this.bodyMaterial;
 	}
 	createUpMaterial(cell){
+		if(cell.fog) return this.upMaterialFog;
 		return this.upMaterial;
 	}
 }
@@ -129,3 +144,13 @@ class FlagFactory extends AbstractMaterialFactory{
 export const Swedish = new TileFactory(DefaultExtrudeSettings, new FlagFactory("Sweden"));
 
 
+export const Lookup = name=>{
+	switch(name){
+		case "RandomGreen": return RandomGreen;
+		case "RandomBlack": return RandomBlack;
+		case "RandomBlue": return RandomBlue;
+		case "RandomRed" : return RandomRed;
+		case "Swedish" : return Swedish;
+		default: return RandomGreen;
+	}
+}

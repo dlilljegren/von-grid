@@ -12,14 +12,14 @@ export class Coord{
      * @param {int} s 
      * @param {int} t 
      */
-    constructor(q, r,t){
+    constructor(q,r,t){
         this._q = q || 0; // x grid coordinate (using different letters so that it won't be confused with pixel/world coordinates)
 		this._r = r || 0; // y grid coordinate		
 		this._t = t || 0; // The height grid coordinate
     }
 
     static CreateQRT(q,r,t){
-        return new Coord(q,r,t);
+        return Coord.QRT(q,r,t);
     }
 
     static CreateRowColDepth(row,col,depth){
@@ -27,7 +27,12 @@ export class Coord{
     }
 
     static QRT(q,r,t){
-        return new Coord(q,r,t);
+        const key = `${q}:${r}:${t}`;
+        let val =Coord.Cache.get(key);
+        if(val != null) return val;
+        val =new Coord(q,r,t);
+        Coord.Cache.set(key,val);
+        return val;
     }
 
     static QRS(q,r,s){
@@ -71,11 +76,11 @@ export class Coord{
      * Return coord with depth+1
      */
     get above(){
-        return new Coord(this._q,this._r,this._t+1);
+        return Coord.QRT(this._q,this._r,this._t+1);
     }
     
     atDepth(d){
-        return new Coord(this._q,this._r,d);
+        return Coord.QRT(this._q,this._r,d);
     }
 
     toString(){
@@ -83,15 +88,22 @@ export class Coord{
     }
 
     add(otherCoord){
-        return Coord.CreateQRT(this._q+otherCoord._q,this._r+otherCoord._r,this._t+otherCoord._t);
+        return Coord.QRT(this._q+otherCoord._q,this._r+otherCoord._r,this._t+otherCoord._t);
     }    
     scale(factor){
-        return Coord.CreateQRT(this._q*factor,this._r*factor,this._t*factor);
+        return Coord.QRT(this._q*factor,this._r*factor,this._t*factor);
+    }
+
+    addR(r){
+        return Coord.QRT(this._q,this._r+r,0);
+    }
+    addQ(q){
+        return Coord.QRT(this._q+q,this._r,0);
     }
 
     //https://www.redblobgames.com/grids/hexagons/#distances-cube
     distanceInPlane(o){
-        return (Math.abs(this._q - o._q) + abs(this._r - o._r) + abs(a.s - o.s)) / 2
+        return (Math.abs(this._q - o._q) + Math.abs(this._r - o._r) + Math.abs(this.s - o.s)) / 2
     }
 
     equals(c) {
@@ -108,6 +120,8 @@ export class Coord{
         return this.add(Coord.sqrDirections[direction]);
     }
 }
+
+Coord.Cache = new Map();
 
 Coord.ORIGO = Coord.QRT(0,0,0);
 
